@@ -5,8 +5,6 @@ Source and installation guide here: https://neuron.yale.edu/neuron/getstd.
 
 Please, install with python(this key: ```--with-nrnpython```) and mpi(key: ```--with-paranrn``` for parallel computing)
 
-#### Please, clone our project 
-```git clone https://github.com/max-talano/bypass.git```
 
 #### Before simulation compile mod files
 go to directory ```/CPG_STDP/py```
