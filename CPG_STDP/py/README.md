@@ -22,10 +22,9 @@ After succesful compile you can see:
 For complex activity simulation we recommend to use parallel computing, but even in this case calcutation takes from 1 hour to 12 hours depend on number of steps, speed and number of receptors. In addition, calculation time depends on computer performance and number of threads.
 
 Before run parallel calculation, please, make the directory for recorded results: 
-```mkdir results```
+```mkdir res_riham```
 
 To run parallel calculation, please, use this command:
 
-```mpiexec -n [number_of_threads] nrniv -mpi -python cpg_rat.py ```
+```mpiexec -n [number_of_threads] nrniv -mpi -python rybak_rat_cpg.py ```
 
-To set the parameters open ```cpg_rat.py``` with text editor that you prefer, you can choose mode, speed, EES frequency, number of layers, and steps.
