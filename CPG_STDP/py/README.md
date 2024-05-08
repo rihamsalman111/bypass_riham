@@ -26,3 +26,5 @@ To run parallel calculation, please, use this command:
 
 ```mpiexec -n [number_of_threads] nrniv -mpi -python rybak_rat_cpg.py ```
 
+or 
+```mpiexec -n [number_of_threads] nrniv -python rybak_rat_cpg.py ```
