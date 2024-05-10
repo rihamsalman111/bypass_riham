@@ -1196,28 +1196,38 @@ def connect_cpg_legs_I(cpg_first_leg, cpg_second_leg, weight, delay):
     # Establish the connections from second leg to first leg (vice versa)
     for second_leg_group, first_leg_group in connections_1:
       connectcells(second_leg_group, first_leg_group, weight, delay,True)
+    logging.info("Connected left and right legs done")
 
 
-logging.info("Connected left and right legs done")
-def set_phase(cpg_left, cpg_right, phase_left_ext, phase_right_flex):
+def set_interleg_phase(cpg_left, cpg_right, cycle_duration):
     """
-    Sets the phase offsets for left extensors and right flexors.
-    :param cpg_left: instance of CPG class for left leg
-    :param cpg_right: instance of CPG class for right leg
-    :param phase_left_ext: phase offset for left leg extensors
-    :param phase_right_flex: phase offset for right leg flexors
+    Adjusts the phase of activation between the left and right CPG neuron groups to synchronize leg movements.
+
+    Parameters:
+    - cpg_left: Instance of the CPG model for the left leg.
+    - cpg_right: Instance of the CPG model for the right leg.
+    - cycle_duration: Duration of one locomotion cycle in ms.
     """
-    # Set phase for left leg extensors
+    phase_shift = 0.5 * cycle_duration  # Half cycle phase shift
+
+    # Assuming RG_E and RG_F are lists of neuron objects with a 'stim' attribute
+    # Adjusting the stimulator's start times for the neurons
+
+    # Left leg extensors synchronized with Right leg flexors
     for neuron in cpg_left.RG_E:
-        neuron.phase = phase_left_ext
-
-    # Set phase for right leg flexors
+        if hasattr(neuron, 'stim'):
+            neuron.stim.start = 0  # Starts at the beginning of the cycle
     for neuron in cpg_right.RG_F:
-        neuron.phase = phase_right_flex
+        if hasattr(neuron, 'stim'):
+            neuron.stim.start = phase_shift  # Starts half a cycle later
 
-    # Synchronize opposite muscle groups
-    cpg_left.update_phase_relations()
-    cpg_right.update_phase_relations()
+    # Right leg extensors synchronized with Left leg flexors
+    for neuron in cpg_right.RG_E:
+        if hasattr(neuron, 'stim'):
+            neuron.stim.start = phase_shift  # Starts half a cycle later
+    for neuron in cpg_left.RG_F:
+        if hasattr(neuron, 'stim'):
+            neuron.stim.start = 0  # Starts at the beginning of the cycle
 
 
 if __name__ == '__main__':
@@ -1233,7 +1243,8 @@ if __name__ == '__main__':
         # Connect left and right legs and get the connected neuron groups
         connect_cpg_legs_E(cpg_left_leg, cpg_right_leg, weight=0.5, delay=1.0)
         connect_cpg_legs_I(cpg_left_leg, cpg_right_leg, weight=0.5, delay=1.0)
-        set_phase(cpg_left_leg, cpg_right_leg, 0.5, 0.5)  # Setting 0.5 phase offset for synchronization
+        # Example of how to call this function in  setup
+        set_interleg_phase(cpg_left_leg, cpg_right_leg, cycle_duration=500)  # Assuming 100 ms cycle duration
 
         logging.info("Connected left and right legs")
 
