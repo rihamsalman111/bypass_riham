@@ -42,7 +42,7 @@ step_number = 5
 
 one_step_time = int((6 * speed + CV_0_len) / (int(1000 / bs_fr))) * (int(1000 / bs_fr))
 #time_sim = 100 + one_step_time * step_number
-time_sim = 500
+time_sim = 600
 
 exnclist = []
 inhnclist = []
