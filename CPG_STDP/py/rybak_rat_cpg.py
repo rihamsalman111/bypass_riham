@@ -246,9 +246,11 @@ class CPG_R:
                 '''RG2Ia'''
                 connectcells(self.dict_RG_F[layer], self.Ia_aff_F, 0.95, 1, True)
             '''RG2Motor, RG2Ia'''
-            #connectcells(self.dict_RG_F[layer], self.mns_F, 0.0001, 2)
-            '''Neg feedback loop RG->Ia'''
-            #connectcells(self.dict_RG_F[layer], self.Ia_aff_F, 0.95, 1, True)
+
+            connectcells(self.dict_RG_F[layer], self.mns_F, 3.75, 2)
+            connectcells(self.dict_RG_F[layer], self.Ia_aff_F, 0.95, 1, True)
+
+
         '''STDP synapse'''
         connectcells(self.BS_aff_F, self.RG_F, 3.75, 3, stdptype=True)
         connectcells(self.BS_aff_E, self.RG_E, 3.75, 3, stdptype=True)
@@ -1197,6 +1199,26 @@ def connect_cpg_legs_I(cpg_first_leg, cpg_second_leg, weight, delay):
 
 
 logging.info("Connected left and right legs done")
+def set_phase(cpg_left, cpg_right, phase_left_ext, phase_right_flex):
+    """
+    Sets the phase offsets for left extensors and right flexors.
+    :param cpg_left: instance of CPG class for left leg
+    :param cpg_right: instance of CPG class for right leg
+    :param phase_left_ext: phase offset for left leg extensors
+    :param phase_right_flex: phase offset for right leg flexors
+    """
+    # Set phase for left leg extensors
+    for neuron in cpg_left.RG_E:
+        neuron.phase = phase_left_ext
+
+    # Set phase for right leg flexors
+    for neuron in cpg_right.RG_F:
+        neuron.phase = phase_right_flex
+
+    # Synchronize opposite muscle groups
+    cpg_left.update_phase_relations()
+    cpg_right.update_phase_relations()
+
 
 if __name__ == '__main__':
     k_nrns = 0
@@ -1204,13 +1226,14 @@ if __name__ == '__main__':
 
     for i in range(versions):
         # Create CPG models for both legs
-        cpg_left_leg = CPG_R(speed, bs_fr, 100, step_number, N)
-        cpg_right_leg = CPG_L(speed, bs_fr, 100, step_number, N)
+        cpg_left_leg = CPG_L(speed, bs_fr, 100, step_number, N)
+        cpg_right_leg = CPG_R(speed, bs_fr, 100, step_number, N)
         logging.info("Created both legs CPG models")
-
+       #cpg_right_leg.set_phase(0.5)
         # Connect left and right legs and get the connected neuron groups
         connect_cpg_legs_E(cpg_left_leg, cpg_right_leg, weight=0.5, delay=1.0)
         connect_cpg_legs_I(cpg_left_leg, cpg_right_leg, weight=0.5, delay=1.0)
+        set_phase(cpg_left_leg, cpg_right_leg, 0.5, 0.5)  # Setting 0.5 phase offset for synchronization
 
         logging.info("Connected left and right legs")
 
@@ -1284,4 +1307,3 @@ if __name__ == '__main__':
 
     # Finish the simulation
     finish()
-
