@@ -1103,14 +1103,14 @@ def spikeout(pool_left, pool_right, name, version, v_vec_left, v_vec_right):
     if rank == 0:
         logging.info("start recording")
         result = np.mean(np.array(result_right), axis=0, dtype=np.float32)
-        with hdf5.File('./res/{}_sp_{}_CVsR_{}_bs_{}.hdf5'.format(name, speed, CV_number, bs_fr), 'w') as file:
+        with hdf5.File('./res_riham/{}_sp_{}_CVsR_{}_bs_{}.hdf5'.format(name, speed, CV_number, bs_fr), 'w') as file:
             for i in range(step_number):
                 sl = slice((int(1000 / bs_fr) * 40 + i * one_step_time * 40),
                            (int(1000 / bs_fr) * 40 + (i + 1) * one_step_time * 40))
                 file.create_dataset('#0_step_{}'.format(i), data=np.array(result)[sl], compression="gzip")
 
         result = np.mean(np.array(result_left), axis=0, dtype=np.float32)
-        with hdf5.File('./res/{}_sp_{}_CVsL_{}_bs_{}.hdf5'.format(name, speed, CV_number, bs_fr), 'w') as file:
+        with hdf5.File('./res_riham/{}_sp_{}_CVsL_{}_bs_{}.hdf5'.format(name, speed, CV_number, bs_fr), 'w') as file:
             for i in range(step_number):
                 sl = slice((int(1000 / bs_fr) * 40 + i * one_step_time * 40),
                            (int(1000 / bs_fr) * 40 + (i + 1) * one_step_time * 40))
@@ -1279,7 +1279,7 @@ if __name__ == '__main__':
         logging.info("Simulation done for both legs")
 
         # Save the time vector
-        with open('./res/time.txt', 'w') as time_file:
+        with open('./res_riham/time.txt', 'w') as time_file:
             for time_point in t:
                 time_file.write(str(time_point) + "\n")
 
