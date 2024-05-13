@@ -69,6 +69,394 @@ import random
 network topology https://github.com/max-talanov/bypass/blob/main/figs/CPG_feedback_loops.png
 '''
 
+class CPG_L:
+    def __init__(self, speed, bs_fr, inh_p, step_number, N):
+
+        self.interneurons = []
+        self.motoneurons = []
+        self.muscles = []
+        self.afferents = []
+        self.stims = []
+        self.ncell = N
+        self.groups = []
+        self.motogroups = []
+        self.musclegroups = []
+        self.affgroups = []
+        self.RG_E = []  # Rhythm generators of extensors
+        self.RG_F = []  # Rhythm generators of flexor
+        self.V3F = []
+        self.V0d = []
+        self.V2a = []
+        self.C_1 = []
+        self.C_0 = []
+        self.V0v = []
+
+
+
+        for layer in range(CV_number):
+            '''cut and muscle feedback'''
+            ## self.dict_CV = {layer: 'CV{}'.format(layer + 1)}
+            self.dict_CV_1 = {layer: 'CV{}_1'.format(layer + 1)}
+            self.dict_RG_E = {layer: 'RG{}_E'.format(layer + 1)}
+            self.dict_RG_F = {layer: 'RG{}_F'.format(layer + 1)}
+            self.dict_V3F = {layer: 'V3{}_F'.format(layer + 1)}
+            self.dict_V2a = {layer: 'V2a{}_F'.format(layer + 1)}
+            self.dict_V0v = {layer: 'V0v{}_F'.format(layer + 1)}
+
+            self.dict_C = {layer: 'C{}'.format(layer + 1)}
+
+        for layer in range(CV_number):
+            '''Cutaneous pools'''
+            ##self.dict_CV[layer] = self.addpool(self.ncell, "CV" + str(layer + 1), "aff")
+            self.dict_CV_1[layer] = self.addpool(self.ncell, "CV" + str(layer + 1) + "_1", "aff")
+
+            '''Rhythm generator pools'''
+            self.dict_RG_E[layer] = self.addpool(self.ncell, "RG" + str(layer + 1) + "_E", "int")
+            self.dict_RG_F[layer] = self.addpool(self.ncell, "RG" + str(layer + 1) + "_F", "int")
+            self.RG_E.append(self.dict_RG_E[layer])
+            self.RG_F.append(self.dict_RG_F[layer])
+
+        '''RG'''
+        self.RG_E = sum(self.RG_E, [])
+        self.InE = self.addpool(nInt, "InE", "int")
+        self.RG_F = sum(self.RG_F, [])
+        self.InF = self.addpool(nInt, "InF", "int")
+        self.In1 = self.addpool(nInt, "In1", "int")
+
+        '''sensory and muscle afferents and brainstem and V3F'''
+        ## self.sens_aff = self.addpool(nAff, "sens_aff", "aff")
+        self.Ia_aff_E = self.addpool(nAff, "Ia_aff_E", "aff")
+        self.Ia_aff_F = self.addpool(nAff, "Ia_aff_F", "aff")
+        self.BS_aff_E = self.addpool(nAff, "BS_aff_E", "aff")
+        self.BS_aff_F = self.addpool(nAff, "BS_aff_F", "aff")
+        self.V3F = self.addpool(nInt, "V3F", "int")
+        self.V0v = self.addpool(nInt, "V0v", "int")
+        self.V2a = self.addpool(nInt, "V2a", "int")
+        self.V0d = self.addpool(nInt, "V0d", "int")
+
+
+        '''moto neuron pools'''
+        self.mns_E = self.addpool(nMN, "mns_E", "moto")
+        self.mns_F = self.addpool(nMN, "mns_F", "moto")
+
+        '''muscles'''
+        self.muscle_E = self.addpool(nMN * 30, "muscle_E", "muscle")
+        self.muscle_F = self.addpool(nMN * 20, "muscle_F", "muscle")
+
+        '''reflex arc'''
+        self.Ia_E = self.addpool(nInt, "Ia_E", "int")
+        self.R_E = self.addpool(nInt, "R_E", "int")  # Renshaw cells
+        self.Ia_F = self.addpool(nInt, "Ia_F", "int")
+        self.R_F = self.addpool(nInt, "R_F", "int")  # Renshaw cells
+        # self.Iagener_E = []
+        # self.Iagener_F = []
+
+        '''BS'''
+        # periodic stimulation
+        self.E_bs_gids, self.F_bs_gids = self.add_bs_geners(bs_fr, 10)
+
+        '''muscle afferents generators'''
+        self.Iagener_E = self.addIagener(self.muscle_E, self.muscle_E, 10, weight=20)
+        self.Iagener_F = self.addIagener(self.muscle_F, self.muscle_F, speed * 6, weight=20)
+        Iagener_E_1000 = self.addIagener(self.muscle_E, self.muscle_E, 1000, weight=20)
+        Iagener_F_1000 = self.addIagener(self.muscle_E, self.muscle_E, 1000 + (speed * 6), weight=20)
+
+        '''cutaneous inputs'''
+        cfr = 200
+        c_int = 1000 / cfr
+
+        '''cutaneous inputs generators'''
+        for layer in range(CV_number):
+            self.dict_C[layer] = []
+            for i in range(step_number):
+                self.dict_C[layer].append(self.addgener(25 + speed * layer + i * (speed * CV_number + CV_0_len),
+                                                        random.gauss(cfr, cfr / 10), (speed / c_int + 1)))
+
+
+
+        '''Generators'''
+        for i in range(step_number):
+            self.C_0.append(self.addgener(25 + speed * 6 + i * (speed * 6 + CV_0_len), cfr, CV_0_len / c_int, False))
+
+
+        # self.C_0.append(self.addgener(0, cfr, (speed / c_int)))
+
+        for layer in range(CV_number):
+            self.C_1.append(self.dict_CV_1[layer])
+        self.C_1 = sum(self.C_1, [])
+        # self.C_0 = sum(self.C_0, [])
+
+
+
+        #not sure
+
+
+        #need to check weight
+        ''' BS '''
+        for E_bs_gid in self.E_bs_gids:
+            genconnect(E_bs_gid, self.BS_aff_E, 3.5, 3)
+
+        for F_bs_gid in self.F_bs_gids:
+            genconnect(F_bs_gid, self.BS_aff_F, 3.5, 3)
+
+        #connectcells(self.BS_aff_F, self.V3F, 1.5, 3)
+
+
+        '''generators of Ia aff'''
+        ## TODO originally: 00005 and 0001
+        ## TODO fix Iagener
+        genconnect(self.Iagener_E, self.Ia_aff_E, 0.5, 1, False, 5)
+        genconnect(self.Iagener_F, self.Ia_aff_F, 1.5, 1, False, 15)
+        # genconnect(Iagener_E_1000, self.Ia_aff_E, 5.0, 1, False, 5)
+        # genconnect(Iagener_F_1000, self.Ia_aff_F, 5.0, 1, False, 15)
+
+        '''Ia2motor'''
+        #ichanged the weight
+        connectcells(self.Ia_aff_E, self.mns_E, 1.55, 1.5)
+        connectcells(self.Ia_aff_F, self.mns_F, 1.5, 1.5)
+        '''motor2muscles'''
+        connectcells(self.mns_E, self.muscle_E, 15.5, 2, False, 45)
+        connectcells(self.mns_F, self.muscle_F, 15.5, 2, False, 45)
+
+        for layer in range(CV_number):
+            '''Internal to RG topology'''
+            connectinsidenucleus(self.dict_RG_F[layer])
+            connectinsidenucleus(self.dict_RG_E[layer])
+
+            '''RG2Motor'''
+            connectcells(self.dict_RG_E[layer], self.mns_E, 2.75, 3)
+            connectcells(self.dict_RG_F[layer], self.mns_F, 2.75, 3)
+
+            '''Neg feedback RG -> Ia'''
+            ## TODO why do we have this neg feedback ?
+            if layer > 3:
+                connectcells(self.dict_RG_E[layer], self.Ia_aff_E, layer * 0.0002, 1, True)
+            else:
+                '''RG2Ia'''
+                connectcells(self.dict_RG_E[layer], self.Ia_aff_E, 0.0001, 1, True)
+
+            '''RG2Motor, RG2Ia'''
+            connectcells(self.dict_RG_F[layer], self.mns_F, 3.75, 2)
+            '''Neg feedback loop RG->Ia'''
+            connectcells(self.dict_RG_F[layer], self.Ia_aff_F, 0.95, 1, True)
+
+        '''cutaneous inputs'''
+        for layer in range(CV_number):
+            connectcells(self.dict_C[layer], self.dict_CV_1[layer], 0.15 * k * speed, 2)
+            connectcells(self.dict_CV_1[layer], self.dict_RG_E[layer], 0.00035 * k * speed, 3)
+
+        # connectcells(self.IP_F, self.Ia_aff_F, 0.0015, 2, True)
+        # connectcells(self.IP_E, self.Ia_aff_E, 0.0015, 2, True)
+
+        '''Rhythm generators'''
+        for layer in range(CV_number):
+            connectcells(self.dict_RG_E[layer], self.InE, 0.001, 1)
+            ## TODO weight 0.0001
+            connectcells(self.dict_RG_F[layer], self.InF, 0.001, 1)
+            connectcells(self.dict_RG_F[layer], self.In1, 0.001, 1,True)
+
+        '''Ia2RG, RG2Motor'''
+        connectcells(self.InE, self.RG_F, 0.5, 1, True)
+        '''STDP synapse'''
+        connectcells(self.Ia_aff_F, self.RG_F, 0.5, 1, stdptype=True)
+        connectcells(self.In1, self.RG_F, 0.5, 1, True)
+
+        # TODO check this too many reciprocal inh connections
+        connectcells(self.InE, self.Ia_aff_F, 1.2, 1, True)
+        connectcells(self.InE, self.mns_F, 0.8, 1, True)
+
+        connectcells(self.InF, self.RG_E, 0.8, 1, True)
+        '''STDP synapse'''
+        connectcells(self.Ia_aff_E, self.RG_E, 0.5, 1, stdptype=True)
+
+        # TODO check this too many reciprocal inh connections
+        ## connectcells(self.InF, self.InE, 0.5, 1, True)
+        connectcells(self.InF, self.Ia_aff_E, 0.5, 1, True)
+        connectcells(self.InF, self.mns_E, 0.4, 1, True)
+
+        '''reflex arc'''
+        connectcells(self.InE, self.Ia_E, 0.001, 1)
+        connectcells(self.Ia_aff_E, self.Ia_E, 0.008, 1)
+        connectcells(self.mns_E, self.R_E, 0.00015, 1)
+        connectcells(self.Ia_E, self.mns_F, 0.08, 1, True)
+        connectcells(self.R_E, self.mns_E, 0.00015, 1, True)
+        connectcells(self.R_E, self.Ia_E, 0.001, 1, True)
+
+        connectcells(self.InF, self.Ia_F, 0.001, 1)
+        connectcells(self.Ia_aff_F, self.Ia_F, 0.008, 1)
+        connectcells(self.mns_F, self.R_F, 0.00015, 1)
+        connectcells(self.Ia_F, self.mns_E, 0.08, 1, True)
+        connectcells(self.R_F, self.mns_F, 0.00015, 1, True)
+        connectcells(self.R_F, self.Ia_F, 0.001, 1, True)
+
+        connectcells(self.R_E, self.R_F, 0.04, 1, True)
+        connectcells(self.R_F, self.R_E, 0.04, 1, True)
+        connectcells(self.Ia_E, self.Ia_F, 0.08, 1, True)
+        connectcells(self.Ia_F, self.Ia_E, 0.08, 1, True)
+        ## TODO check the inh connection
+        connectcells(self.InE, self.InF, 0.04, 1, True)
+        connectcells(self.InF, self.InE, 0.04, 1, True)
+
+        ## TODO possibly project to RG_F
+        connectcells(self.RG_F, self.V2a, 3.75, 3)
+       #connectcells(self.RG_F, self.V3F, 3.75, 3)
+        connectcells(self.RG_F, self.V0d, 3.75, 3)
+        connectcells(self.V2a, self.V0v, 3.75, 3)
+        # for layer in range(CV_number):
+        #     connectcells(self.dict_V0v[layer], self.dict_V2a[layer], 0.001, 1)
+
+    def addpool(self, num, name="test", neurontype="int"):
+        '''
+        Creates pool of cells determined by the neurontype and returns gids of the pool
+        Parameters
+        ----------
+        num: int
+            neurons number in pool
+        name: string
+            the name of the pool
+        neurontype: string
+            int: interneuron
+            delay: interneuron with 5ht
+            bursting: interneuron with bursting
+            moto: motor neuron
+            aff: afferent
+            muscle: muscle fiber
+        Returns
+        -------
+        gids: list
+            the list of cells gids
+        '''
+        gids = []
+        gid = 0
+        if neurontype.lower() == "delay":
+            delaytype = True
+        else:
+            delaytype = False
+
+        if neurontype.lower() == "moto":
+            diams = motodiams(num)
+        for i in range(rank, num, nhost):
+            if neurontype.lower() == "moto":
+                cell = motoneuron(diams[i])
+                self.motoneurons.append(cell)
+            elif neurontype.lower() == "aff":
+                cell = bioaffrat()
+                self.afferents.append(cell)
+            elif neurontype.lower() == "muscle":
+                cell = muscle()
+                self.motoneurons.append(cell)
+                self.muscles.append(cell)
+            elif neurontype.lower() == "bursting":
+                cell = interneuron(False, bursting_mode=True)
+                self.interneurons.append(cell)
+            else:
+                cell = interneuron(delaytype)
+                self.interneurons.append(cell)
+
+            while pc.gid_exists(gid) != 0:
+                gid += 1
+            gids.append(gid)
+            pc.set_gid2node(gid, rank)
+            nc = cell.connect2target(None)
+            pc.cell(gid, nc)
+
+        # Groups
+        if (neurontype.lower() == "muscle"):
+            self.musclegroups.append((gids, name))
+            self.motogroups.append((gids, name))
+        elif (neurontype.lower() == "moto"):
+            self.motogroups.append((gids, name))
+        elif neurontype.lower() == "aff":
+            self.affgroups.append((gids, name))
+        else:
+            self.groups.append((gids, name))
+
+        return gids
+
+    def add_bs_geners(self, freq, spikes_per_step):
+        E_bs_gids = []
+        F_bs_gids = []
+        for step in range(step_number):
+            E_bs_gids.append(self.addgener(int(one_step_time * (step + 0.5)), freq, spikes_per_step, False))
+            F_bs_gids.append(self.addgener(int(one_step_time * step), freq, spikes_per_step, False))
+        logging.info(E_bs_gids)
+        logging.info(F_bs_gids)
+        return E_bs_gids, F_bs_gids
+
+    def addgener(self, start, freq, nums, noise=True):
+        '''
+        Creates generator and returns generator gid
+
+        Parameters
+        ----------
+        start: int
+            generator start up
+        freq: int
+            generator frequency
+        nums: int
+            signals number
+        noise: bool
+            generates noizy output
+        Returns
+        -------
+        gid: int
+            generator gid
+        '''
+        gid = 0
+        stim = h.NetStim()
+        stim.number = nums
+        if noise:
+            stim.start = random.uniform(start - 3, start + 3)
+            stim.noise = 0.05
+        else:
+            stim.start = start
+        stim.interval = int(1000 / freq)
+        # skinstim.noise = 0.1
+        self.stims.append(stim)
+        while pc.gid_exists(gid) != 0:
+            gid += 1
+        pc.set_gid2node(gid, rank)
+        ncstim = h.NetCon(stim, None)
+        pc.cell(gid, ncstim)
+        return gid
+
+    def addIagener(self, mn, mn2, start, weight=1.0):
+        '''
+        Creates self.Ia generators and returns generator gids
+        Parameters
+        ----------
+        mn:
+            motor neurons of agonist muscle that contract spindle
+        mn2:
+            motor neurons of antagonist muscle that extend spindle
+        start: int
+            generator start up
+        num: int
+            number in pool
+        w_in: int
+            weight of the connection
+        Returns
+        -------
+        gids: list
+            generators gids
+        '''
+        gid = 0
+        moto = pc.gid2cell(random.randint(mn[0], mn[-1]))
+        moto2 = pc.gid2cell(random.randint(mn2[0], mn2[-1]))
+        stim = h.IaGenerator(0.5)
+        stim.start = start
+        h.setpointer(moto.muscle_unit(0.5)._ref_F_fHill, 'fhill', stim)
+        h.setpointer(moto2.muscle_unit(0.5)._ref_F_fHill, 'fhill2', stim)
+        self.stims.append(stim)
+        while pc.gid_exists(gid) != 0:
+            gid += 1
+        pc.set_gid2node(gid, rank)
+        ncstim = h.NetCon(stim, None)
+        ncstim.weight[0] = weight
+        pc.cell(gid, ncstim)
+
+        return gid
+
 
 class CPG_R:
     def __init__(self, speed, bs_fr, inh_p, step_number, N):
@@ -187,11 +575,7 @@ class CPG_R:
         self.C_1 = sum(self.C_1, [])
         # self.C_0 = sum(self.C_0, [])
 
-        ## TODO possibly project to RG_F
-        connectcells( self.RG_F, self.V2a,3.75, 3)
-        connectcells(self.RG_F, self.V3F, 3.75, 3)
-        connectcells( self.RG_F,self.V0d, 3.75, 3)
-        connectcells(self.V2a, self.V0v, 3.75, 3)
+
 
         #not sure
 
@@ -204,7 +588,7 @@ class CPG_R:
         for F_bs_gid in self.F_bs_gids:
             genconnect(F_bs_gid, self.BS_aff_F, 3.5, 3)
 
-        connectcells(self.BS_aff_F, self.V3F, 1.5, 3)
+       # connectcells(self.BS_aff_F, self.V3F, 1.5, 3)
 
 
         '''generators of Ia aff'''
@@ -240,21 +624,11 @@ class CPG_R:
                 '''RG2Ia'''
                 connectcells(self.dict_RG_E[layer], self.Ia_aff_E, 0.0001, 1, True)
 
-            if layer > 3:
-                connectcells(self.dict_RG_F[layer], self.Ia_aff_F, layer * 0.01, 1, True)
-            else:
-                '''RG2Ia'''
-                connectcells(self.dict_RG_F[layer], self.Ia_aff_F, 0.95, 1, True)
             '''RG2Motor, RG2Ia'''
-
             connectcells(self.dict_RG_F[layer], self.mns_F, 3.75, 2)
+            '''Neg feedback loop RG->Ia'''
             connectcells(self.dict_RG_F[layer], self.Ia_aff_F, 0.95, 1, True)
 
-
-        '''STDP synapse'''
-        connectcells(self.BS_aff_F, self.RG_F, 3.75, 3, stdptype=True)
-        connectcells(self.BS_aff_E, self.RG_E, 3.75, 3, stdptype=True)
-
         '''cutaneous inputs'''
         for layer in range(CV_number):
             connectcells(self.dict_C[layer], self.dict_CV_1[layer], 0.15 * k * speed, 2)
@@ -311,402 +685,12 @@ class CPG_R:
         ## TODO check the inh connection
         connectcells(self.InE, self.InF, 0.04, 1, True)
         connectcells(self.InF, self.InE, 0.04, 1, True)
-
-        # for layer in range(CV_number):
-        #     connectcells(self.dict_V0v[layer], self.dict_V2a[layer], 0.001, 1)
-
-    def addpool(self, num, name="test", neurontype="int"):
-        '''
-        Creates pool of cells determined by the neurontype and returns gids of the pool
-        Parameters
-        ----------
-        num: int
-            neurons number in pool
-        name: string
-            the name of the pool
-        neurontype: string
-            int: interneuron
-            delay: interneuron with 5ht
-            bursting: interneuron with bursting
-            moto: motor neuron
-            aff: afferent
-            muscle: muscle fiber
-        Returns
-        -------
-        gids: list
-            the list of cells gids
-        '''
-        gids = []
-        gid = 0
-        if neurontype.lower() == "delay":
-            delaytype = True
-        else:
-            delaytype = False
-
-        if neurontype.lower() == "moto":
-            diams = motodiams(num)
-        for i in range(rank, num, nhost):
-            if neurontype.lower() == "moto":
-                cell = motoneuron(diams[i])
-                self.motoneurons.append(cell)
-            elif neurontype.lower() == "aff":
-                cell = bioaffrat()
-                self.afferents.append(cell)
-            elif neurontype.lower() == "muscle":
-                cell = muscle()
-                self.motoneurons.append(cell)
-                self.muscles.append(cell)
-            elif neurontype.lower() == "bursting":
-                cell = interneuron(False, bursting_mode=True)
-                self.interneurons.append(cell)
-            else:
-                cell = interneuron(delaytype)
-                self.interneurons.append(cell)
-
-            while pc.gid_exists(gid) != 0:
-                gid += 1
-            gids.append(gid)
-            pc.set_gid2node(gid, rank)
-            nc = cell.connect2target(None)
-            pc.cell(gid, nc)
-
-        # Groups
-        if (neurontype.lower() == "muscle"):
-            self.musclegroups.append((gids, name))
-            self.motogroups.append((gids, name))
-        elif (neurontype.lower() == "moto"):
-            self.motogroups.append((gids, name))
-        elif neurontype.lower() == "aff":
-            self.affgroups.append((gids, name))
-        else:
-            self.groups.append((gids, name))
-
-        return gids
-
-    def add_bs_geners(self, freq, spikes_per_step):
-        E_bs_gids = []
-        F_bs_gids = []
-        for step in range(step_number):
-            F_bs_gids.append(self.addgener(int(one_step_time * (step + 0.5)), freq, spikes_per_step, False))
-            E_bs_gids.append(self.addgener(int(one_step_time * step), freq, spikes_per_step, False))
-        logging.info(E_bs_gids)
-        logging.info(F_bs_gids)
-        return E_bs_gids, F_bs_gids
-
-    def addgener(self, start, freq, nums, noise=True):
-        '''
-        Creates generator and returns generator gid
-
-        Parameters
-        ----------
-        start: int
-            generator start up
-        freq: int
-            generator frequency
-        nums: int
-            signals number
-        noise: bool
-            generates noizy output
-        Returns
-        -------
-        gid: int
-            generator gid
-        '''
-        gid = 0
-        stim = h.NetStim()
-        stim.number = nums
-        if noise:
-            stim.start = random.uniform(start - 3, start + 3)
-            stim.noise = 0.05
-        else:
-            stim.start = start
-        stim.interval = int(1000 / freq)
-        # skinstim.noise = 0.1
-        self.stims.append(stim)
-        while pc.gid_exists(gid) != 0:
-            gid += 1
-        pc.set_gid2node(gid, rank)
-        ncstim = h.NetCon(stim, None)
-        pc.cell(gid, ncstim)
-        return gid
-
-    def addIagener(self, mn, mn2, start, weight=1.0):
-        '''
-        Creates self.Ia generators and returns generator gids
-        Parameters
-        ----------
-        mn:
-            motor neurons of agonist muscle that contract spindle
-        mn2:
-            motor neurons of antagonist muscle that extend spindle
-        start: int
-            generator start up
-        num: int
-            number in pool
-        w_in: int
-            weight of the connection
-        Returns
-        -------
-        gids: list
-            generators gids
-        '''
-        gid = 0
-        moto = pc.gid2cell(random.randint(mn[0], mn[-1]))
-        moto2 = pc.gid2cell(random.randint(mn2[0], mn2[-1]))
-        stim = h.IaGenerator(0.5)
-        stim.start = start
-        h.setpointer(moto.muscle_unit(0.5)._ref_F_fHill, 'fhill', stim)
-        h.setpointer(moto2.muscle_unit(0.5)._ref_F_fHill, 'fhill2', stim)
-        self.stims.append(stim)
-        while pc.gid_exists(gid) != 0:
-            gid += 1
-        pc.set_gid2node(gid, rank)
-        ncstim = h.NetCon(stim, None)
-        ncstim.weight[0] = weight
-        pc.cell(gid, ncstim)
-
-        return gid
-
-class CPG_L:
-    def __init__(self, speed, bs_fr, inh_p, step_number, N):
-
-        self.interneurons = []
-        self.motoneurons = []
-        self.muscles = []
-        self.afferents = []
-        self.stims = []
-        self.ncell = N
-        self.groups = []
-        self.motogroups = []
-        self.musclegroups = []
-        self.affgroups = []
-        self.RG_E = []  # Rhythm generators of extensors
-        self.RG_F = []  # Rhythm generators of flexor
-        self.V3F = []
-        self.V0d = []
-        self.V2a = []
-        self.C_1 = []
-        self.C_0 = []
-        self.V0v = []
-
-
-
-        for layer in range(CV_number):
-            '''cut and muscle feedback'''
-            ## self.dict_CV = {layer: 'CV{}'.format(layer + 1)}
-            self.dict_CV_1 = {layer: 'CV{}_1'.format(layer + 1)}
-            self.dict_RG_E = {layer: 'RG{}_E'.format(layer + 1)}
-            self.dict_RG_F = {layer: 'RG{}_F'.format(layer + 1)}
-            self.dict_V3F = {layer: 'V3{}_F'.format(layer + 1)}
-            self.dict_V2a = {layer: 'V2a{}_F'.format(layer + 1)}
-            self.dict_V0v = {layer: 'V0v{}_F'.format(layer + 1)}
-
-            self.dict_C = {layer: 'C{}'.format(layer + 1)}
-
-        for layer in range(CV_number):
-            '''Cutaneous pools'''
-            ##self.dict_CV[layer] = self.addpool(self.ncell, "CV" + str(layer + 1), "aff")
-            self.dict_CV_1[layer] = self.addpool(self.ncell, "CV" + str(layer + 1) + "_1", "aff")
-
-            '''Rhythm generator pools'''
-            self.dict_RG_E[layer] = self.addpool(self.ncell, "RG" + str(layer + 1) + "_E", "int")
-            self.dict_RG_F[layer] = self.addpool(self.ncell, "RG" + str(layer + 1) + "_F", "int")
-            self.RG_E.append(self.dict_RG_E[layer])
-            self.RG_F.append(self.dict_RG_F[layer])
-
-        '''RG'''
-        self.RG_E = sum(self.RG_E, [])
-        self.InE = self.addpool(nInt, "InE", "int")
-        self.RG_F = sum(self.RG_F, [])
-        self.InF = self.addpool(nInt, "InF", "int")
-        self.In1 = self.addpool(nInt, "In1", "int")
-
-        '''sensory and muscle afferents and brainstem and V3F'''
-        ## self.sens_aff = self.addpool(nAff, "sens_aff", "aff")
-        self.Ia_aff_E = self.addpool(nAff, "Ia_aff_E", "aff")
-        self.Ia_aff_F = self.addpool(nAff, "Ia_aff_F", "aff")
-        self.BS_aff_E = self.addpool(nAff, "BS_aff_E", "aff")
-        self.BS_aff_F = self.addpool(nAff, "BS_aff_F", "aff")
-        self.V3F = self.addpool(nInt, "V3F", "int")
-        self.V0v = self.addpool(nInt, "V0v", "int")
-        self.V2a = self.addpool(nInt, "V2a", "int")
-        self.V0d = self.addpool(nInt, "V0d", "int")
-
-
-        '''moto neuron pools'''
-        self.mns_E = self.addpool(nMN, "mns_E", "moto")
-        self.mns_F = self.addpool(nMN, "mns_F", "moto")
-
-        '''muscles'''
-        self.muscle_E = self.addpool(nMN * 30, "muscle_E", "muscle")
-        self.muscle_F = self.addpool(nMN * 20, "muscle_F", "muscle")
-
-        '''reflex arc'''
-        self.Ia_E = self.addpool(nInt, "Ia_E", "int")
-        self.R_E = self.addpool(nInt, "R_E", "int")  # Renshaw cells
-        self.Ia_F = self.addpool(nInt, "Ia_F", "int")
-        self.R_F = self.addpool(nInt, "R_F", "int")  # Renshaw cells
-        # self.Iagener_E = []
-        # self.Iagener_F = []
-
-        '''BS'''
-        # periodic stimulation
-        self.E_bs_gids, self.F_bs_gids = self.add_bs_geners(bs_fr, 10)
-
-        '''muscle afferents generators'''
-        self.Iagener_E = self.addIagener(self.muscle_E, self.muscle_E, 10, weight=20)
-        self.Iagener_F = self.addIagener(self.muscle_F, self.muscle_F, speed * 6, weight=20)
-        Iagener_E_1000 = self.addIagener(self.muscle_E, self.muscle_E, 1000, weight=20)
-        Iagener_F_1000 = self.addIagener(self.muscle_E, self.muscle_E, 1000 + (speed * 6), weight=20)
-
-        '''cutaneous inputs'''
-        cfr = 200
-        c_int = 1000 / cfr
-
-        '''cutaneous inputs generators'''
-        for layer in range(CV_number):
-            self.dict_C[layer] = []
-            for i in range(step_number):
-                self.dict_C[layer].append(self.addgener(25 + speed * layer + i * (speed * CV_number + CV_0_len),
-                                                        random.gauss(cfr, cfr / 10), (speed / c_int + 1)))
-
-
-
-        '''Generators'''
-        for i in range(step_number):
-            self.C_0.append(self.addgener(25 + speed * 6 + i * (speed * 6 + CV_0_len), cfr, CV_0_len / c_int, False))
-
-
-        # self.C_0.append(self.addgener(0, cfr, (speed / c_int)))
-
-        for layer in range(CV_number):
-            self.C_1.append(self.dict_CV_1[layer])
-        self.C_1 = sum(self.C_1, [])
-        # self.C_0 = sum(self.C_0, [])
 
         ## TODO possibly project to RG_F
-        connectcells( self.RG_F, self.V2a,3.75, 3)
-        connectcells(self.RG_F, self.V3F, 3.75, 3)
-        connectcells( self.RG_F,self.V0d, 3.75, 3)
+        connectcells(self.RG_F, self.V2a, 3.75, 3)
+        #connectcells(self.RG_F, self.V3F, 3.75, 3)
+        connectcells(self.RG_F, self.V0d, 3.75, 3)
         connectcells(self.V2a, self.V0v, 3.75, 3)
-
-        #not sure
-
-
-        #need to check weight
-        ''' BS '''
-        for E_bs_gid in self.E_bs_gids:
-            genconnect(E_bs_gid, self.BS_aff_E, 3.5, 3)
-
-        for F_bs_gid in self.F_bs_gids:
-            genconnect(F_bs_gid, self.BS_aff_F, 3.5, 3)
-
-        connectcells(self.BS_aff_F, self.V3F, 1.5, 3)
-
-
-        '''generators of Ia aff'''
-        ## TODO originally: 00005 and 0001
-        ## TODO fix Iagener
-        genconnect(self.Iagener_E, self.Ia_aff_E, 0.5, 1, False, 5)
-        genconnect(self.Iagener_F, self.Ia_aff_F, 1.5, 1, False, 15)
-        # genconnect(Iagener_E_1000, self.Ia_aff_E, 5.0, 1, False, 5)
-        # genconnect(Iagener_F_1000, self.Ia_aff_F, 5.0, 1, False, 15)
-
-        '''Ia2motor'''
-        #ichanged the weight
-        connectcells(self.Ia_aff_E, self.mns_E, 1.55, 1.5)
-        connectcells(self.Ia_aff_F, self.mns_F, 1.5, 1.5)
-        '''motor2muscles'''
-        connectcells(self.mns_E, self.muscle_E, 15.5, 2, False, 45)
-        connectcells(self.mns_F, self.muscle_F, 15.5, 2, False, 45)
-
-        for layer in range(CV_number):
-            '''Internal to RG topology'''
-            connectinsidenucleus(self.dict_RG_F[layer])
-            connectinsidenucleus(self.dict_RG_E[layer])
-
-            '''RG2Motor'''
-            connectcells(self.dict_RG_E[layer], self.mns_E, 2.75, 3)
-            connectcells(self.dict_RG_F[layer], self.mns_F, 2.75, 3)
-
-            '''Neg feedback RG -> Ia'''
-            ## TODO why do we have this neg feedback ?
-            if layer > 3:
-                connectcells(self.dict_RG_E[layer], self.Ia_aff_E, layer * 0.0002, 1, True)
-            else:
-                '''RG2Ia'''
-                connectcells(self.dict_RG_E[layer], self.Ia_aff_E, 0.0001, 1, True)
-
-            if layer > 3:
-                connectcells(self.dict_RG_F[layer], self.Ia_aff_F, layer * 0.01, 1, True)
-            else:
-                '''RG2Ia'''
-                connectcells(self.dict_RG_F[layer], self.Ia_aff_F, 0.95, 1, True)
-            '''RG2Motor, RG2Ia'''
-            #connectcells(self.dict_RG_F[layer], self.mns_F, 0.0001, 2)
-            '''Neg feedback loop RG->Ia'''
-            #connectcells(self.dict_RG_F[layer], self.Ia_aff_F, 0.95, 1, True)
-        '''STDP synapse'''
-        connectcells(self.BS_aff_F, self.RG_F, 3.75, 3, stdptype=True)
-        connectcells(self.BS_aff_E, self.RG_E, 3.75, 3, stdptype=True)
-
-        '''cutaneous inputs'''
-        for layer in range(CV_number):
-            connectcells(self.dict_C[layer], self.dict_CV_1[layer], 0.15 * k * speed, 2)
-            connectcells(self.dict_CV_1[layer], self.dict_RG_E[layer], 0.00035 * k * speed, 3)
-
-        # connectcells(self.IP_F, self.Ia_aff_F, 0.0015, 2, True)
-        # connectcells(self.IP_E, self.Ia_aff_E, 0.0015, 2, True)
-
-        '''Rhythm generators'''
-        for layer in range(CV_number):
-            connectcells(self.dict_RG_E[layer], self.InE, 0.001, 1)
-            ## TODO weight 0.0001
-            connectcells(self.dict_RG_F[layer], self.InF, 0.001, 1)
-            connectcells(self.dict_RG_F[layer], self.In1, 0.001, 1,True)
-
-        '''Ia2RG, RG2Motor'''
-        connectcells(self.InE, self.RG_F, 0.5, 1, True)
-        '''STDP synapse'''
-        connectcells(self.Ia_aff_F, self.RG_F, 0.5, 1, stdptype=True)
-        connectcells(self.In1, self.RG_F, 0.5, 1, True)
-
-        # TODO check this too many reciprocal inh connections
-        connectcells(self.InE, self.Ia_aff_F, 1.2, 1, True)
-        connectcells(self.InE, self.mns_F, 0.8, 1, True)
-
-        connectcells(self.InF, self.RG_E, 0.8, 1, True)
-        '''STDP synapse'''
-        connectcells(self.Ia_aff_E, self.RG_E, 0.5, 1, stdptype=True)
-
-        # TODO check this too many reciprocal inh connections
-        ## connectcells(self.InF, self.InE, 0.5, 1, True)
-        connectcells(self.InF, self.Ia_aff_E, 0.5, 1, True)
-        connectcells(self.InF, self.mns_E, 0.4, 1, True)
-
-        '''reflex arc'''
-        connectcells(self.InE, self.Ia_E, 0.001, 1)
-        connectcells(self.Ia_aff_E, self.Ia_E, 0.008, 1)
-        connectcells(self.mns_E, self.R_E, 0.00015, 1)
-        connectcells(self.Ia_E, self.mns_F, 0.08, 1, True)
-        connectcells(self.R_E, self.mns_E, 0.00015, 1, True)
-        connectcells(self.R_E, self.Ia_E, 0.001, 1, True)
-
-        connectcells(self.InF, self.Ia_F, 0.001, 1)
-        connectcells(self.Ia_aff_F, self.Ia_F, 0.008, 1)
-        connectcells(self.mns_F, self.R_F, 0.00015, 1)
-        connectcells(self.Ia_F, self.mns_E, 0.08, 1, True)
-        connectcells(self.R_F, self.mns_F, 0.00015, 1, True)
-        connectcells(self.R_F, self.Ia_F, 0.001, 1, True)
-
-        connectcells(self.R_E, self.R_F, 0.04, 1, True)
-        connectcells(self.R_F, self.R_E, 0.04, 1, True)
-        connectcells(self.Ia_E, self.Ia_F, 0.08, 1, True)
-        connectcells(self.Ia_F, self.Ia_E, 0.08, 1, True)
-        ## TODO check the inh connection
-        connectcells(self.InE, self.InF, 0.04, 1, True)
-        connectcells(self.InF, self.InE, 0.04, 1, True)
-
         # for layer in range(CV_number):
         #     connectcells(self.dict_V0v[layer], self.dict_V2a[layer], 0.001, 1)
 
@@ -1113,14 +1097,14 @@ def spikeout(pool_left, pool_right, name, version, v_vec_left, v_vec_right):
     if rank == 0:
         logging.info("start recording")
         result = np.mean(np.array(result_right), axis=0, dtype=np.float32)
-        with hdf5.File('./res_riham/{}_sp_{}_CVsR_{}_bs_{}.hdf5'.format(name, speed, CV_number, bs_fr), 'w') as file:
+        with hdf5.File('./res/{}_sp_{}_CVsR_{}_bs_{}.hdf5'.format(name, speed, CV_number, bs_fr), 'w') as file:
             for i in range(step_number):
                 sl = slice((int(1000 / bs_fr) * 40 + i * one_step_time * 40),
                            (int(1000 / bs_fr) * 40 + (i + 1) * one_step_time * 40))
                 file.create_dataset('#0_step_{}'.format(i), data=np.array(result)[sl], compression="gzip")
 
         result = np.mean(np.array(result_left), axis=0, dtype=np.float32)
-        with hdf5.File('./res_riham/{}_sp_{}_CVsL_{}_bs_{}.hdf5'.format(name, speed, CV_number, bs_fr), 'w') as file:
+        with hdf5.File('./res/{}_sp_{}_CVsL_{}_bs_{}.hdf5'.format(name, speed, CV_number, bs_fr), 'w') as file:
             for i in range(step_number):
                 sl = slice((int(1000 / bs_fr) * 40 + i * one_step_time * 40),
                            (int(1000 / bs_fr) * 40 + (i + 1) * one_step_time * 40))
@@ -1166,11 +1150,9 @@ def connect_cpg_legs_E(cpg_first_leg, cpg_second_leg, weight, delay):
 
     connections = [
         (cpg_first_leg.V0v, cpg_second_leg.In1),
-        (cpg_first_leg.V3F, cpg_second_leg.RG_F),
     ]
     connections_1 = [
         (cpg_first_leg.In1, cpg_second_leg.V0v),
-        (cpg_first_leg.RG_F, cpg_second_leg.V3F),
     ]
     # Establish the connections from first leg to second leg
     for first_leg_group, second_leg_group in connections:
@@ -1179,7 +1161,7 @@ def connect_cpg_legs_E(cpg_first_leg, cpg_second_leg, weight, delay):
     # Establish the connections from second leg to first leg (vice versa)
     for second_leg_group, first_leg_group in connections_1:
         connectcells(second_leg_group, first_leg_group, weight, delay,False)
-logging.info("Connected left and right legs done1")
+    logging.info("Connected left and right legs done1")
 
 def connect_cpg_legs_I(cpg_first_leg, cpg_second_leg, weight, delay):
 
@@ -1244,7 +1226,7 @@ if __name__ == '__main__':
         connect_cpg_legs_E(cpg_left_leg, cpg_right_leg, weight=0.5, delay=1.0)
         connect_cpg_legs_I(cpg_left_leg, cpg_right_leg, weight=0.5, delay=1.0)
         # Example of how to call this function in  setup
-        set_interleg_phase(cpg_left_leg, cpg_right_leg, cycle_duration=500)  # Assuming 100 ms cycle duration
+       # set_interleg_phase(cpg_left_leg, cpg_right_leg, cycle_duration=300)  # Assuming 100 ms cycle duration
 
         logging.info("Connected left and right legs")
 
@@ -1291,7 +1273,7 @@ if __name__ == '__main__':
         logging.info("Simulation done for both legs")
 
         # Save the time vector
-        with open('./res_riham/time.txt', 'w') as time_file:
+        with open('./res/time.txt', 'w') as time_file:
             for time_point in t:
                 time_file.write(str(time_point) + "\n")
 
