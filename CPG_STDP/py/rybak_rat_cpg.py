@@ -201,6 +201,9 @@ class CPG_L:
 
         #connectcells(self.BS_aff_F, self.V3F, 1.5, 3)
 
+        '''STDP synapse'''
+        connectcells(self.BS_aff_F, self.RG_F, 0.001, 3, stdptype=True)
+        connectcells(self.BS_aff_E, self.RG_E, 0.001, 3, stdptype=True)
 
         '''generators of Ia aff'''
         ## TODO originally: 00005 and 0001
@@ -590,6 +593,9 @@ class CPG_R:
 
        # connectcells(self.BS_aff_F, self.V3F, 1.5, 3)
 
+        '''STDP synapse'''
+        connectcells(self.BS_aff_F, self.RG_F, 0.001, 3, stdptype=True)
+        connectcells(self.BS_aff_E, self.RG_E, 0.001, 3, stdptype=True)
 
         '''generators of Ia aff'''
         ## TODO originally: 00005 and 0001
