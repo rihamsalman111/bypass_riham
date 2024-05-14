@@ -41,8 +41,8 @@ step_number = 5
 
 
 one_step_time = int((6 * speed + CV_0_len) / (int(1000 / bs_fr))) * (int(1000 / bs_fr))
-#time_sim = 100 + one_step_time * step_number
-time_sim = 600
+time_sim = 100 + one_step_time * step_number
+#time_sim = 600
 
 exnclist = []
 inhnclist = []
@@ -156,10 +156,10 @@ class CPG_L:
         self.E_bs_gids, self.F_bs_gids = self.add_bs_geners(bs_fr, 10)
 
         '''muscle afferents generators'''
-        self.Iagener_E = self.addIagener(self.muscle_E, self.muscle_E, 10, weight=20)
-        self.Iagener_F = self.addIagener(self.muscle_F, self.muscle_F, speed * 6, weight=20)
-        Iagener_E_1000 = self.addIagener(self.muscle_E, self.muscle_E, 1000, weight=20)
-        Iagener_F_1000 = self.addIagener(self.muscle_E, self.muscle_E, 1000 + (speed * 6), weight=20)
+        self.Iagener_E = self.addIagener(self.muscle_E, self.muscle_E, speed * 6, weight=20)
+        self.Iagener_F = self.addIagener(self.muscle_F, self.muscle_F, 10, weight=20)
+        Iagener_E_1000 = self.addIagener(self.muscle_E, self.muscle_E, 1000+ (speed * 6), weight=20)
+        Iagener_F_1000 = self.addIagener(self.muscle_E, self.muscle_E, 1000 , weight=20)
 
         '''cutaneous inputs'''
         cfr = 200
@@ -1232,7 +1232,7 @@ if __name__ == '__main__':
         connect_cpg_legs_E(cpg_left_leg, cpg_right_leg, weight=0.5, delay=1.0)
         connect_cpg_legs_I(cpg_left_leg, cpg_right_leg, weight=0.5, delay=1.0)
         # Example of how to call this function in  setup
-       # set_interleg_phase(cpg_left_leg, cpg_right_leg, cycle_duration=300)  # Assuming 100 ms cycle duration
+        set_interleg_phase(cpg_left_leg, cpg_right_leg, cycle_duration=600)  # Assuming 100 ms cycle duration
 
         logging.info("Connected left and right legs")
 
