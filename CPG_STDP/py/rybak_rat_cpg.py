@@ -37,12 +37,12 @@ CV_0_len = 12  # 125 # Duration of the CV generator with no sensory inputs
 extra_layers = 0  # 1 + layers
 
 
-step_number = 5
+step_number = 10
 
 
 one_step_time = int((6 * speed + CV_0_len) / (int(1000 / bs_fr))) * (int(1000 / bs_fr))
-time_sim = 100 + one_step_time * step_number
-#time_sim = 600
+#time_sim = 100 + one_step_time * step_number
+time_sim = 500
 
 exnclist = []
 inhnclist = []
@@ -230,18 +230,6 @@ class CPG_L:
             connectcells(self.dict_RG_E[layer], self.mns_E, 2.75, 3)
             connectcells(self.dict_RG_F[layer], self.mns_F, 2.75, 3)
 
-            '''Neg feedback RG -> Ia'''
-            ## TODO why do we have this neg feedback ?
-            if layer > 3:
-                connectcells(self.dict_RG_E[layer], self.Ia_aff_E, layer * 0.0002, 1, True)
-            else:
-                '''RG2Ia'''
-                connectcells(self.dict_RG_E[layer], self.Ia_aff_E, 0.0001, 1, True)
-
-            '''RG2Motor, RG2Ia'''
-            connectcells(self.dict_RG_F[layer], self.mns_F, 3.75, 2)
-            '''Neg feedback loop RG->Ia'''
-            connectcells(self.dict_RG_F[layer], self.Ia_aff_F, 0.95, 1, True)
 
         '''cutaneous inputs'''
         for layer in range(CV_number):
@@ -256,7 +244,7 @@ class CPG_L:
             connectcells(self.dict_RG_E[layer], self.InE, 0.001, 1)
             ## TODO weight 0.0001
             connectcells(self.dict_RG_F[layer], self.InF, 0.001, 1)
-            connectcells(self.dict_RG_F[layer], self.In1, 0.001, 1,True)
+            #connectcells(self.dict_RG_F[layer], self.In1, 0.001, 1,True)
 
         '''Ia2RG, RG2Motor'''
         connectcells(self.InE, self.RG_F, 0.5, 1, True)
@@ -265,8 +253,8 @@ class CPG_L:
         connectcells(self.In1, self.RG_F, 0.5, 1, True)
 
         # TODO check this too many reciprocal inh connections
-        connectcells(self.InE, self.Ia_aff_F, 1.2, 1, True)
-        connectcells(self.InE, self.mns_F, 0.8, 1, True)
+       # connectcells(self.InE, self.Ia_aff_F, 1.2, 1, True)
+        #connectcells(self.InE, self.mns_F, 0.8, 1, True)
 
         connectcells(self.InF, self.RG_E, 0.8, 1, True)
         '''STDP synapse'''
@@ -274,18 +262,18 @@ class CPG_L:
 
         # TODO check this too many reciprocal inh connections
         ## connectcells(self.InF, self.InE, 0.5, 1, True)
-        connectcells(self.InF, self.Ia_aff_E, 0.5, 1, True)
-        connectcells(self.InF, self.mns_E, 0.4, 1, True)
+        #connectcells(self.InF, self.Ia_aff_E, 0.5, 1, True)
+        #connectcells(self.InF, self.mns_E, 0.4, 1, True)
 
         '''reflex arc'''
-        connectcells(self.InE, self.Ia_E, 0.001, 1)
+        #connectcells(self.InE, self.Ia_E, 0.001, 1)
         connectcells(self.Ia_aff_E, self.Ia_E, 0.008, 1)
         connectcells(self.mns_E, self.R_E, 0.00015, 1)
         connectcells(self.Ia_E, self.mns_F, 0.08, 1, True)
         connectcells(self.R_E, self.mns_E, 0.00015, 1, True)
         connectcells(self.R_E, self.Ia_E, 0.001, 1, True)
 
-        connectcells(self.InF, self.Ia_F, 0.001, 1)
+        #connectcells(self.InF, self.Ia_F, 0.001, 1)
         connectcells(self.Ia_aff_F, self.Ia_F, 0.008, 1)
         connectcells(self.mns_F, self.R_F, 0.00015, 1)
         connectcells(self.Ia_F, self.mns_E, 0.08, 1, True)
@@ -294,11 +282,11 @@ class CPG_L:
 
         connectcells(self.R_E, self.R_F, 0.04, 1, True)
         connectcells(self.R_F, self.R_E, 0.04, 1, True)
-        connectcells(self.Ia_E, self.Ia_F, 0.08, 1, True)
-        connectcells(self.Ia_F, self.Ia_E, 0.08, 1, True)
+        #connectcells(self.Ia_E, self.Ia_F, 0.08, 1, True)
+        #connectcells(self.Ia_F, self.Ia_E, 0.08, 1, True)
         ## TODO check the inh connection
-        connectcells(self.InE, self.InF, 0.04, 1, True)
-        connectcells(self.InF, self.InE, 0.04, 1, True)
+        #connectcells(self.InE, self.InF, 0.04, 1, True)
+        #connectcells(self.InF, self.InE, 0.04, 1, True)
 
         ## TODO possibly project to RG_F
         connectcells(self.RG_F, self.V2a, 3.75, 3)
@@ -548,7 +536,7 @@ class CPG_R:
         self.E_bs_gids, self.F_bs_gids = self.add_bs_geners(bs_fr, 10)
 
         '''muscle afferents generators'''
-        self.Iagener_E = self.addIagener(self.muscle_E, self.muscle_E, 10, weight=20)
+        self.Iagener_E = self.addIagener(self.muscle_E, self.muscle_E,10, weight=20)
         self.Iagener_F = self.addIagener(self.muscle_F, self.muscle_F, speed * 6, weight=20)
         Iagener_E_1000 = self.addIagener(self.muscle_E, self.muscle_E, 1000, weight=20)
         Iagener_F_1000 = self.addIagener(self.muscle_E, self.muscle_E, 1000 + (speed * 6), weight=20)
@@ -591,7 +579,7 @@ class CPG_R:
         for F_bs_gid in self.F_bs_gids:
             genconnect(F_bs_gid, self.BS_aff_F, 3.5, 3)
 
-       # connectcells(self.BS_aff_F, self.V3F, 1.5, 3)
+        #connectcells(self.BS_aff_F, self.V3F, 1.5, 3)
 
         '''STDP synapse'''
         connectcells(self.BS_aff_F, self.RG_F, 0.001, 3, stdptype=True)
@@ -622,18 +610,6 @@ class CPG_R:
             connectcells(self.dict_RG_E[layer], self.mns_E, 2.75, 3)
             connectcells(self.dict_RG_F[layer], self.mns_F, 2.75, 3)
 
-            '''Neg feedback RG -> Ia'''
-            ## TODO why do we have this neg feedback ?
-            if layer > 3:
-                connectcells(self.dict_RG_E[layer], self.Ia_aff_E, layer * 0.0002, 1, True)
-            else:
-                '''RG2Ia'''
-                connectcells(self.dict_RG_E[layer], self.Ia_aff_E, 0.0001, 1, True)
-
-            '''RG2Motor, RG2Ia'''
-            connectcells(self.dict_RG_F[layer], self.mns_F, 3.75, 2)
-            '''Neg feedback loop RG->Ia'''
-            connectcells(self.dict_RG_F[layer], self.Ia_aff_F, 0.95, 1, True)
 
         '''cutaneous inputs'''
         for layer in range(CV_number):
@@ -648,7 +624,7 @@ class CPG_R:
             connectcells(self.dict_RG_E[layer], self.InE, 0.001, 1)
             ## TODO weight 0.0001
             connectcells(self.dict_RG_F[layer], self.InF, 0.001, 1)
-            connectcells(self.dict_RG_F[layer], self.In1, 0.001, 1,True)
+            #connectcells(self.dict_RG_F[layer], self.In1, 0.001, 1,True)
 
         '''Ia2RG, RG2Motor'''
         connectcells(self.InE, self.RG_F, 0.5, 1, True)
@@ -657,8 +633,8 @@ class CPG_R:
         connectcells(self.In1, self.RG_F, 0.5, 1, True)
 
         # TODO check this too many reciprocal inh connections
-        connectcells(self.InE, self.Ia_aff_F, 1.2, 1, True)
-        connectcells(self.InE, self.mns_F, 0.8, 1, True)
+       # connectcells(self.InE, self.Ia_aff_F, 1.2, 1, True)
+        #connectcells(self.InE, self.mns_F, 0.8, 1, True)
 
         connectcells(self.InF, self.RG_E, 0.8, 1, True)
         '''STDP synapse'''
@@ -666,18 +642,18 @@ class CPG_R:
 
         # TODO check this too many reciprocal inh connections
         ## connectcells(self.InF, self.InE, 0.5, 1, True)
-        connectcells(self.InF, self.Ia_aff_E, 0.5, 1, True)
-        connectcells(self.InF, self.mns_E, 0.4, 1, True)
+        #connectcells(self.InF, self.Ia_aff_E, 0.5, 1, True)
+        #connectcells(self.InF, self.mns_E, 0.4, 1, True)
 
         '''reflex arc'''
-        connectcells(self.InE, self.Ia_E, 0.001, 1)
+        #connectcells(self.InE, self.Ia_E, 0.001, 1)
         connectcells(self.Ia_aff_E, self.Ia_E, 0.008, 1)
         connectcells(self.mns_E, self.R_E, 0.00015, 1)
         connectcells(self.Ia_E, self.mns_F, 0.08, 1, True)
         connectcells(self.R_E, self.mns_E, 0.00015, 1, True)
         connectcells(self.R_E, self.Ia_E, 0.001, 1, True)
 
-        connectcells(self.InF, self.Ia_F, 0.001, 1)
+        #connectcells(self.InF, self.Ia_F, 0.001, 1)
         connectcells(self.Ia_aff_F, self.Ia_F, 0.008, 1)
         connectcells(self.mns_F, self.R_F, 0.00015, 1)
         connectcells(self.Ia_F, self.mns_E, 0.08, 1, True)
@@ -686,15 +662,15 @@ class CPG_R:
 
         connectcells(self.R_E, self.R_F, 0.04, 1, True)
         connectcells(self.R_F, self.R_E, 0.04, 1, True)
-        connectcells(self.Ia_E, self.Ia_F, 0.08, 1, True)
-        connectcells(self.Ia_F, self.Ia_E, 0.08, 1, True)
+        #connectcells(self.Ia_E, self.Ia_F, 0.08, 1, True)
+        #connectcells(self.Ia_F, self.Ia_E, 0.08, 1, True)
         ## TODO check the inh connection
-        connectcells(self.InE, self.InF, 0.04, 1, True)
-        connectcells(self.InF, self.InE, 0.04, 1, True)
+        #connectcells(self.InE, self.InF, 0.04, 1, True)
+        #connectcells(self.InF, self.InE, 0.04, 1, True)
 
         ## TODO possibly project to RG_F
         connectcells(self.RG_F, self.V2a, 3.75, 3)
-        #connectcells(self.RG_F, self.V3F, 3.75, 3)
+       #connectcells(self.RG_F, self.V3F, 3.75, 3)
         connectcells(self.RG_F, self.V0d, 3.75, 3)
         connectcells(self.V2a, self.V0v, 3.75, 3)
         # for layer in range(CV_number):
@@ -772,8 +748,8 @@ class CPG_R:
         E_bs_gids = []
         F_bs_gids = []
         for step in range(step_number):
-            F_bs_gids.append(self.addgener(int(one_step_time * (step + 0.5)), freq, spikes_per_step, False))
             E_bs_gids.append(self.addgener(int(one_step_time * step), freq, spikes_per_step, False))
+            F_bs_gids.append(self.addgener(int(one_step_time * (step + 0.5)), freq, spikes_per_step, False))
         logging.info(E_bs_gids)
         logging.info(F_bs_gids)
         return E_bs_gids, F_bs_gids
@@ -1232,7 +1208,7 @@ if __name__ == '__main__':
         connect_cpg_legs_E(cpg_left_leg, cpg_right_leg, weight=0.5, delay=1.0)
         connect_cpg_legs_I(cpg_left_leg, cpg_right_leg, weight=0.5, delay=1.0)
         # Example of how to call this function in  setup
-        set_interleg_phase(cpg_left_leg, cpg_right_leg, cycle_duration=600)  # Assuming 100 ms cycle duration
+       #set_interleg_phase(cpg_left_leg, cpg_right_leg, cycle_duration=600)  # Assuming 100 ms cycle duration
 
         logging.info("Connected left and right legs")
 
