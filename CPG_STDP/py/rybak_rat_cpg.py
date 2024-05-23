@@ -37,12 +37,12 @@ CV_0_len = 12  # 125 # Duration of the CV generator with no sensory inputs
 extra_layers = 0  # 1 + layers
 
 
-step_number = 10
+step_number = 5
 
 
 one_step_time = int((6 * speed + CV_0_len) / (int(1000 / bs_fr))) * (int(1000 / bs_fr))
 #time_sim = 100 + one_step_time * step_number
-time_sim = 500
+time_sim = 600
 
 exnclist = []
 inhnclist = []
@@ -208,8 +208,8 @@ class CPG_L:
         '''generators of Ia aff'''
         ## TODO originally: 00005 and 0001
         ## TODO fix Iagener
-        genconnect(self.Iagener_E, self.Ia_aff_E, 0.5, 1, False, 5)
-        genconnect(self.Iagener_F, self.Ia_aff_F, 1.5, 1, False, 15)
+        genconnect(self.Iagener_E, self.Ia_aff_E, 1.5, 1, False, 5)
+        genconnect(self.Iagener_F, self.Ia_aff_F, 1.5, 1, False, 10)
         # genconnect(Iagener_E_1000, self.Ia_aff_E, 5.0, 1, False, 5)
         # genconnect(Iagener_F_1000, self.Ia_aff_F, 5.0, 1, False, 15)
 
@@ -549,14 +549,14 @@ class CPG_R:
         for layer in range(CV_number):
             self.dict_C[layer] = []
             for i in range(step_number):
-                self.dict_C[layer].append(self.addgener(25 + speed * layer + i * (speed * CV_number + CV_0_len),
+                self.dict_C[layer].append(self.addgener(speed * layer + i * (speed * CV_number + CV_0_len),
                                                         random.gauss(cfr, cfr / 10), (speed / c_int + 1)))
 
 
 
         '''Generators'''
         for i in range(step_number):
-            self.C_0.append(self.addgener(25 + speed * 6 + i * (speed * 6 + CV_0_len), cfr, CV_0_len / c_int, False))
+            self.C_0.append(self.addgener(speed * 6 + i * (speed * 6 + CV_0_len), cfr, CV_0_len / c_int, False))
 
 
         # self.C_0.append(self.addgener(0, cfr, (speed / c_int)))
@@ -588,8 +588,8 @@ class CPG_R:
         '''generators of Ia aff'''
         ## TODO originally: 00005 and 0001
         ## TODO fix Iagener
-        genconnect(self.Iagener_E, self.Ia_aff_E, 0.5, 1, False, 5)
-        genconnect(self.Iagener_F, self.Ia_aff_F, 1.5, 1, False, 15)
+        genconnect(self.Iagener_E, self.Ia_aff_E, 1.5, 1, False, 5)
+        genconnect(self.Iagener_F, self.Ia_aff_F, 1.5, 1, False, 10)
         # genconnect(Iagener_E_1000, self.Ia_aff_E, 5.0, 1, False, 5)
         # genconnect(Iagener_F_1000, self.Ia_aff_F, 5.0, 1, False, 15)
 
@@ -611,6 +611,8 @@ class CPG_R:
             connectcells(self.dict_RG_F[layer], self.mns_F, 2.75, 3)
 
 
+
+
         '''cutaneous inputs'''
         for layer in range(CV_number):
             connectcells(self.dict_C[layer], self.dict_CV_1[layer], 0.15 * k * speed, 2)
@@ -624,7 +626,7 @@ class CPG_R:
             connectcells(self.dict_RG_E[layer], self.InE, 0.001, 1)
             ## TODO weight 0.0001
             connectcells(self.dict_RG_F[layer], self.InF, 0.001, 1)
-            #connectcells(self.dict_RG_F[layer], self.In1, 0.001, 1,True)
+            #connectcells(self.dict_RG_F[layer], self.dict_V2a[layer], 0.001, 1,True)
 
         '''Ia2RG, RG2Motor'''
         connectcells(self.InE, self.RG_F, 0.5, 1, True)
@@ -670,7 +672,7 @@ class CPG_R:
 
         ## TODO possibly project to RG_F
         connectcells(self.RG_F, self.V2a, 3.75, 3)
-       #connectcells(self.RG_F, self.V3F, 3.75, 3)
+        connectcells(self.RG_F, self.V3F, 3.75, 3)
         connectcells(self.RG_F, self.V0d, 3.75, 3)
         connectcells(self.V2a, self.V0v, 3.75, 3)
         # for layer in range(CV_number):
